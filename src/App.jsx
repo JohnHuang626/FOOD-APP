@@ -1,32 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
-import {
-  getAuth,
-  signInAnonymously,
-  signInWithCustomToken,
-  onAuthStateChanged,
-} from 'firebase/auth';
-import {
-  getFirestore,
-  collection,
-  onSnapshot,
-  addDoc,
-  deleteDoc,
-  doc,
-  serverTimestamp,
-} from 'firebase/firestore';
-import {
-  Utensils,
-  MapPin,
-  Tag,
-  Plus,
-  Loader2,
-  Link2,
-  Image as ImageIcon,
-  Trash2,
-  LogOut,
-  FileText,
-} from 'lucide-react';
+import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { Utensils, MapPin, Tag, Plus, Loader2, Link2, Image as ImageIcon, Trash2, LogOut, FileText } from 'lucide-react';
 
 // --- 環境變數與 Firebase 初始化 ---
 // 這裡的邏輯可以自動判斷是在 Canvas 測試環境，還是您自己的 StackBlitz/Vercel 環境
@@ -34,22 +10,18 @@ const isCanvasEnv = typeof __firebase_config !== 'undefined';
 
 // 安全地獲取 Vite 環境變數
 const getEnv = (key) => {
-  try {
-    return import.meta.env[key];
-  } catch (e) {
-    return undefined;
-  }
+  try { return import.meta.env[key]; } catch (e) { return undefined; }
 };
 
-const firebaseConfig = isCanvasEnv
-  ? JSON.parse(__firebase_config)
+const firebaseConfig = isCanvasEnv 
+  ? JSON.parse(__firebase_config) 
   : {
-      apiKey: 'AIzaSyAFEiJkrCYvEuaInuOyIXGkHfKf2NU8bvs',
-      authDomain: 'food-app-acb66.firebaseapp.com',
-      projectId: 'food-app-acb66',
-      storageBucket: 'food-app-acb66.firebasestorage.app',
-      messagingSenderId: '369341313853',
-      appId: '1:369341313853:web:180f7314563e1894588b54',
+      apiKey: "AIzaSyAFEiJkrCYvEuaInuOyIXGkHfKf2NU8bvs",
+      authDomain: "food-app-acb66.firebaseapp.com",
+      projectId: "food-app-acb66",
+      storageBucket: "food-app-acb66.firebasestorage.app",
+      messagingSenderId: "369341313853",
+      appId: "1:369341313853:web:180f7314563e1894588b54"
     };
 
 const app = initializeApp(firebaseConfig);
@@ -57,7 +29,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // Gemini API Key (Canvas 由系統注入，自己的環境由 .env 讀取)
-const apiKey = isCanvasEnv ? '' : getEnv('VITE_GEMINI_API_KEY') || '';
+const apiKey = isCanvasEnv ? "" : (getEnv('VITE_GEMINI_API_KEY') || ""); 
 
 // Firestore 資料集路徑產生器
 // Canvas 環境有特殊路徑限制，您自己的環境則可以簡化為 'shared_food_list'
@@ -72,15 +44,15 @@ const getCollectionRef = () => {
 
 export default function App() {
   const [user, setUser] = useState(null);
-
+  
   const [restaurants, setRestaurants] = useState([]);
   const [inputText, setInputText] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState('');
-
+  
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-
+  
   // Filters
   const [filterLocation, setFilterLocation] = useState('All');
   const [filterType, setFilterType] = useState('All');
@@ -91,10 +63,7 @@ export default function App() {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        if (
-          typeof __initial_auth_token !== 'undefined' &&
-          __initial_auth_token
-        ) {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
           // Canvas 專屬的自訂驗證
           await signInWithCustomToken(auth, __initial_auth_token);
         } else {
@@ -102,7 +71,7 @@ export default function App() {
           await signInAnonymously(auth);
         }
       } catch (err) {
-        console.error('Auth Error:', err);
+        console.error("Auth Error:", err);
       }
     };
     initAuth();
@@ -118,27 +87,20 @@ export default function App() {
     if (!user) return;
 
     const roomCollectionRef = getCollectionRef();
-
+    
     // 讀取資料並保持同步
-    const unsubscribe = onSnapshot(
-      roomCollectionRef,
-      (snapshot) => {
-        const data = [];
-        snapshot.forEach((doc) => {
-          data.push({ id: doc.id, ...doc.data() });
-        });
-        // 依建立時間排序 (最新的在前面)
-        data.sort(
-          (a, b) =>
-            (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0)
-        );
-        setRestaurants(data);
-      },
-      (error) => {
-        console.error('Firestore error:', error);
-        setErrorMsg('資料同步失敗，請檢查資料庫權限或重整頁面。');
-      }
-    );
+    const unsubscribe = onSnapshot(roomCollectionRef, (snapshot) => {
+      const data = [];
+      snapshot.forEach((doc) => {
+        data.push({ id: doc.id, ...doc.data() });
+      });
+      // 依建立時間排序 (最新的在前面)
+      data.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+      setRestaurants(data);
+    }, (error) => {
+      console.error("Firestore error:", error);
+      setErrorMsg("資料同步失敗，請檢查資料庫權限或重整頁面。");
+    });
 
     return () => unsubscribe();
   }, [user]);
@@ -147,9 +109,9 @@ export default function App() {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
+    
     if (file.size > 5 * 1024 * 1024) {
-      setErrorMsg('圖片太大了，請上傳小於 5MB 的圖片。');
+      setErrorMsg("圖片太大了，請上傳小於 5MB 的圖片。");
       return;
     }
 
@@ -172,14 +134,12 @@ export default function App() {
   // --- Gemini AI Analysis ---
   const analyzeAndAdd = async () => {
     if (!inputText.trim() && !selectedImage) {
-      setErrorMsg('請輸入文字、網址或上傳圖片！');
+      setErrorMsg("請輸入文字、網址或上傳圖片！");
       return;
     }
-
+    
     if (!apiKey && !isCanvasEnv) {
-      setErrorMsg(
-        '未設定 Gemini API Key！請檢查環境變數 VITE_GEMINI_API_KEY。'
-      );
+      setErrorMsg("未設定 Gemini API Key！請檢查環境變數 VITE_GEMINI_API_KEY。");
       return;
     }
 
@@ -197,8 +157,8 @@ export default function App() {
             "location": "縣市與行政區 (如：台北市信義區、嘉義縣太保市，盡量精簡)",
             "type": "食物種類 (如：火鍋、咖啡廳、早午餐、日式料理)",
             "notes": "這家店的特色或推薦餐點 (限30字內)"
-          }`,
-        },
+          }`
+        }
       ];
 
       if (inputText.trim()) {
@@ -211,49 +171,46 @@ export default function App() {
         promptParts.push({
           inlineData: {
             mimeType: selectedImage.type,
-            data: base64Data,
-          },
+            data: base64Data
+          }
         });
       }
 
       const payload = {
         contents: [{ parts: promptParts }],
         generationConfig: {
-          temperature: 0.1,
-        },
+          temperature: 0.1, 
+        }
       };
 
-      const endpoint = isCanvasEnv
+      const endpoint = isCanvasEnv 
         ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`
         : `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
       });
 
-      if (!response.ok) throw new Error('AI 分析失敗，請檢查金鑰或網路連線。');
-
+      if (!response.ok) throw new Error("AI 分析失敗，請檢查金鑰或網路連線。");
+      
       const result = await response.json();
       let aiText = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
+      
       // 清理 Markdown 標記確保是純 JSON
-      aiText = aiText
-        .replace(/```json/gi, '')
-        .replace(/```/g, '')
-        .trim();
-
+      aiText = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();
+      
       let parsedData;
       try {
         parsedData = JSON.parse(aiText);
       } catch (e) {
-        console.error('JSON Parse Error:', aiText);
-        throw new Error('AI 無法正確解析資訊，請嘗試提供更清晰的內容。');
+        console.error("JSON Parse Error:", aiText);
+        throw new Error("AI 無法正確解析資訊，請嘗試提供更清晰的內容。");
       }
 
-      if (!parsedData.name || parsedData.name === '') {
-        throw new Error('找不到餐廳名稱，請提供更詳細的資訊。');
+      if (!parsedData.name || parsedData.name === "") {
+        throw new Error("找不到餐廳名稱，請提供更詳細的資訊。");
       }
 
       // 將結果存入 Firestore
@@ -263,16 +220,17 @@ export default function App() {
         location: parsedData.location || '未分類',
         type: parsedData.type || '未分類',
         notes: parsedData.notes || '',
-        sourceText: inputText.substring(0, 150),
-        hasImage: !!selectedImage,
+        sourceText: inputText.substring(0, 150), 
+        hasImage: !!selectedImage, 
         createdAt: serverTimestamp(),
-        addedBy: user.uid,
+        addedBy: user.uid
       });
 
       clearInput();
+
     } catch (err) {
       console.error(err);
-      setErrorMsg(err.message || '發生錯誤，請稍後再試。');
+      setErrorMsg(err.message || "發生錯誤，請稍後再試。");
     } finally {
       setIsAnalyzing(false);
     }
@@ -281,30 +239,21 @@ export default function App() {
   const deleteRestaurant = async (id) => {
     try {
       if (isCanvasEnv) {
-        const appId =
-          typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        await deleteDoc(
-          doc(db, 'artifacts', appId, 'public', 'data', 'shared_food', id)
-        );
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'shared_food', id));
       } else {
         await deleteDoc(doc(db, 'shared_food_list', id));
       }
     } catch (err) {
-      console.error('Delete error:', err);
+      console.error("Delete error:", err);
     }
   };
 
   // --- Derived Data for Filters ---
-  const locations = [
-    'All',
-    ...new Set(restaurants.map((r) => r.location).filter(Boolean)),
-  ];
-  const types = [
-    'All',
-    ...new Set(restaurants.map((r) => r.type).filter(Boolean)),
-  ];
+  const locations = ['All', ...new Set(restaurants.map(r => r.location).filter(Boolean))];
+  const types = ['All', ...new Set(restaurants.map(r => r.type).filter(Boolean))];
 
-  const filteredRestaurants = restaurants.filter((r) => {
+  const filteredRestaurants = restaurants.filter(r => {
     const matchLoc = filterLocation === 'All' || r.location === filterLocation;
     const matchType = filterType === 'All' || r.type === filterType;
     return matchLoc && matchType;
@@ -312,28 +261,27 @@ export default function App() {
 
   // --- UI Renders ---
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800 font-sans pb-10">
+    <div className="min-h-screen bg-gray-50 text-gray-900 font-sans pb-10">
       {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2 text-orange-500">
             <Utensils size={24} />
-            <h1 className="text-xl font-bold">夫妻美食筆記</h1>
+            <h1 className="text-xl font-bold text-gray-900">夫妻美食筆記</h1>
           </div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 mt-6 space-y-8">
+        
         {/* Input Section */}
         <section className="bg-white rounded-2xl shadow-sm p-5 sm:p-6 border border-gray-100">
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
             <Plus size={20} className="text-orange-500" />
             新增美食情報
           </h2>
-          <p className="text-sm text-gray-500 mb-4">
-            貼上朋友傳的網址、對話文字，或上傳名片/IG截圖，AI 會自動幫你分類！
-          </p>
-
+          <p className="text-sm text-gray-600 mb-4">貼上朋友傳的網址、對話文字，或上傳名片/IG截圖，AI 會自動幫你分類！</p>
+          
           <div className="space-y-4">
             <textarea
               className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-200 outline-none resize-none bg-gray-50"
@@ -342,35 +290,28 @@ export default function App() {
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
             />
-
+            
             <div className="flex flex-wrap items-center gap-3">
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
+              <input 
+                type="file" 
+                accept="image/*" 
+                className="hidden" 
                 ref={fileInputRef}
                 onChange={handleImageChange}
               />
-              <button
+              <button 
                 onClick={() => fileInputRef.current?.click()}
                 className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium"
               >
                 <ImageIcon size={18} />
                 上傳圖片協助分析
               </button>
-
+              
               {imagePreviewUrl && (
                 <div className="relative inline-block">
-                  <img
-                    src={imagePreviewUrl}
-                    alt="Preview"
-                    className="h-10 w-10 object-cover rounded-lg border border-gray-300"
-                  />
-                  <button
-                    onClick={() => {
-                      setSelectedImage(null);
-                      setImagePreviewUrl('');
-                    }}
+                  <img src={imagePreviewUrl} alt="Preview" className="h-10 w-10 object-cover rounded-lg border border-gray-300" />
+                  <button 
+                    onClick={() => { setSelectedImage(null); setImagePreviewUrl(''); }}
                     className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600"
                   >
                     <Trash2 size={12} />
@@ -379,22 +320,14 @@ export default function App() {
               )}
             </div>
 
-            {errorMsg && (
-              <p className="text-red-500 text-sm font-medium bg-red-50 p-3 rounded-lg border border-red-100">
-                {errorMsg}
-              </p>
-            )}
+            {errorMsg && <p className="text-red-500 text-sm font-medium bg-red-50 p-3 rounded-lg border border-red-100">{errorMsg}</p>}
 
-            <button
+            <button 
               onClick={analyzeAndAdd}
               disabled={isAnalyzing}
               className="w-full sm:w-auto flex items-center justify-center gap-2 bg-orange-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-600 transition disabled:opacity-70"
             >
-              {isAnalyzing ? (
-                <Loader2 className="animate-spin" size={20} />
-              ) : (
-                <FileText size={20} />
-              )}
+              {isAnalyzing ? <Loader2 className="animate-spin" size={20} /> : <FileText size={20} />}
               {isAnalyzing ? 'AI 正在大腦運算中...' : '自動分析並存入清單'}
             </button>
           </div>
@@ -404,30 +337,22 @@ export default function App() {
         <section className="flex flex-col sm:flex-row gap-4 items-center bg-orange-50 p-4 rounded-xl">
           <div className="w-full sm:w-1/2 flex items-center gap-2">
             <MapPin size={18} className="text-gray-500" />
-            <select
-              value={filterLocation}
+            <select 
+              value={filterLocation} 
               onChange={(e) => setFilterLocation(e.target.value)}
               className="w-full p-2 bg-white border border-gray-200 rounded-lg outline-none"
             >
-              {locations.map((loc) => (
-                <option key={loc} value={loc}>
-                  {loc === 'All' ? '所有地點' : loc}
-                </option>
-              ))}
+              {locations.map(loc => <option key={loc} value={loc}>{loc === 'All' ? '所有地點' : loc}</option>)}
             </select>
           </div>
           <div className="w-full sm:w-1/2 flex items-center gap-2">
             <Tag size={18} className="text-gray-500" />
-            <select
-              value={filterType}
+            <select 
+              value={filterType} 
               onChange={(e) => setFilterType(e.target.value)}
               className="w-full p-2 bg-white border border-gray-200 rounded-lg outline-none"
             >
-              {types.map((type) => (
-                <option key={type} value={type}>
-                  {type === 'All' ? '所有類型' : type}
-                </option>
-              ))}
+              {types.map(type => <option key={type} value={type}>{type === 'All' ? '所有類型' : type}</option>)}
             </select>
           </div>
         </section>
@@ -441,25 +366,17 @@ export default function App() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredRestaurants.map((rest) => (
-                <div
-                  key={rest.id}
-                  className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition relative group"
-                >
-                  <button
-                    onClick={() => {
-                      if (window.confirm('確定要刪除這筆紀錄嗎？'))
-                        deleteRestaurant(rest.id);
-                    }}
+              {filteredRestaurants.map(rest => (
+                <div key={rest.id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition relative group">
+                  <button 
+                    onClick={() => { if(window.confirm('確定要刪除這筆紀錄嗎？')) deleteRestaurant(rest.id); }}
                     className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100"
                   >
                     <Trash2 size={18} />
                   </button>
-
-                  <h3 className="text-lg font-bold text-gray-800 pr-8">
-                    {rest.name}
-                  </h3>
-
+                  
+                  <h3 className="text-lg font-bold text-gray-800 pr-8">{rest.name}</h3>
+                  
                   <div className="flex flex-wrap gap-2 mt-3 mb-3">
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-orange-700 bg-orange-100 px-2.5 py-1 rounded-full">
                       <MapPin size={12} /> {rest.location}
@@ -468,19 +385,17 @@ export default function App() {
                       <Tag size={12} /> {rest.type}
                     </span>
                   </div>
-
+                  
                   {rest.notes && (
                     <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg mb-3">
                       💡 {rest.notes}
                     </p>
                   )}
-
+                  
                   {rest.sourceText && (
                     <div className="text-xs text-gray-400 mt-2 flex items-start gap-1">
                       <Link2 size={14} className="shrink-0 mt-0.5" />
-                      <span className="line-clamp-2 break-all">
-                        {rest.sourceText}
-                      </span>
+                      <span className="line-clamp-2 break-all">{rest.sourceText}</span>
                     </div>
                   )}
                 </div>
@@ -493,6 +408,7 @@ export default function App() {
             </div>
           )}
         </section>
+
       </main>
     </div>
   );
