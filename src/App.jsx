@@ -291,7 +291,6 @@ export default function App() {
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2 text-orange-500">
             <Utensils size={24} />
-            {/* 更新主要標題 */}
             <h1 className="text-xl font-bold text-gray-900">美食丸家筆記</h1>
             {/* 新增環境標籤，協助確認雙方是否在同一個資料庫 */}
             <span className="hidden sm:inline-block text-xs px-2 py-0.5 rounded-full font-medium ml-2 border border-orange-200 bg-orange-50 text-orange-700">
@@ -304,8 +303,11 @@ export default function App() {
       <main className="max-w-4xl mx-auto px-4 mt-6 space-y-8">
         
         {/* Input Section */}
-        <section className="bg-white rounded-2xl shadow-sm p-5 sm:p-6 border border-gray-100">
-          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+        <section className="bg-white rounded-2xl shadow-sm p-5 sm:p-6 border border-gray-100 relative overflow-hidden">
+          {/* 裝飾性漸層頂部線條 */}
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-orange-400 to-amber-400"></div>
+          
+          <h2 className="text-lg font-bold text-gray-900 mb-4 mt-1 flex items-center gap-2">
             <Plus size={20} className="text-orange-500" />
             新增美食情報
           </h2>
@@ -313,7 +315,7 @@ export default function App() {
           
           <div className="space-y-4">
             <textarea
-              className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-200 outline-none resize-none bg-gray-50"
+              className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-300 outline-none resize-none bg-gray-50/50 transition"
               rows="3"
               placeholder="貼上網址或文字描述 (例如：這家太保市的隱藏版甜點店超好吃！網址是...)"
               value={inputText}
@@ -330,18 +332,18 @@ export default function App() {
               />
               <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium border border-gray-200"
               >
-                <ImageIcon size={18} />
+                <ImageIcon size={18} className="text-gray-500" />
                 上傳圖片協助分析
               </button>
               
               {imagePreviewUrl && (
-                <div className="relative inline-block">
+                <div className="relative inline-block shadow-sm">
                   <img src={imagePreviewUrl} alt="Preview" className="h-10 w-10 object-cover rounded-lg border border-gray-300" />
                   <button 
                     onClick={() => { setSelectedImage(null); setImagePreviewUrl(''); }}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600"
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 shadow-sm"
                   >
                     <Trash2 size={12} />
                   </button>
@@ -354,7 +356,7 @@ export default function App() {
             <button 
               onClick={analyzeAndAdd}
               disabled={isAnalyzing}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-orange-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-600 transition disabled:opacity-70"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-400 text-white px-6 py-3 rounded-xl font-bold hover:from-orange-600 hover:to-orange-500 transition shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isAnalyzing ? <Loader2 className="animate-spin" size={20} /> : <FileText size={20} />}
               {isAnalyzing ? 'AI 正在大腦運算中...' : '自動分析並存入清單'}
@@ -363,23 +365,23 @@ export default function App() {
         </section>
 
         {/* Filters Section */}
-        <section className="flex flex-col sm:flex-row gap-4 items-center bg-orange-50 p-4 rounded-xl">
+        <section className="flex flex-col sm:flex-row gap-4 items-center bg-orange-50/50 p-4 rounded-xl border border-orange-100">
           <div className="w-full sm:w-1/2 flex items-center gap-2">
-            <MapPin size={18} className="text-gray-500" />
+            <MapPin size={18} className="text-orange-400" />
             <select 
               value={filterLocation} 
               onChange={(e) => setFilterLocation(e.target.value)}
-              className="w-full p-2 bg-white border border-gray-200 rounded-lg outline-none"
+              className="w-full p-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-200 transition shadow-sm"
             >
               {locations.map(loc => <option key={loc} value={loc}>{loc === 'All' ? '所有地點' : loc}</option>)}
             </select>
           </div>
           <div className="w-full sm:w-1/2 flex items-center gap-2">
-            <Tag size={18} className="text-gray-500" />
+            <Tag size={18} className="text-orange-400" />
             <select 
               value={filterType} 
               onChange={(e) => setFilterType(e.target.value)}
-              className="w-full p-2 bg-white border border-gray-200 rounded-lg outline-none"
+              className="w-full p-2.5 bg-white border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-orange-200 transition shadow-sm"
             >
               {types.map(type => <option key={type} value={type}>{type === 'All' ? '所有類型' : type}</option>)}
             </select>
@@ -389,74 +391,81 @@ export default function App() {
         {/* List Section */}
         <section>
           {restaurants.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">
-              <Utensils size={48} className="mx-auto mb-4 opacity-20" />
-              <p>清單還是空的，趕快貼上資訊讓 AI 幫你們整理吧！</p>
+            <div className="text-center py-16 text-gray-400 bg-white rounded-2xl border border-gray-100 border-dashed">
+              <Utensils size={48} className="mx-auto mb-4 text-gray-300" />
+              <p className="font-medium text-gray-500">清單還是空的喔！</p>
+              <p className="text-sm mt-1">趕快貼上資訊，讓 AI 幫你們整理美食清單吧！</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            /* 將 gap-4 加大為 gap-6，讓卡片之間有更多呼吸空間 */
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {filteredRestaurants.map(rest => (
-                <div key={rest.id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition relative group flex flex-col">
+                <div key={rest.id} className="bg-white p-6 rounded-2xl shadow border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative group flex flex-col overflow-hidden">
+                  
+                  {/* 卡片頂部裝飾線條 */}
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-orange-400 opacity-80"></div>
+
                   <button 
                     onClick={() => { if(window.confirm('確定要刪除這筆紀錄嗎？')) deleteRestaurant(rest.id); }}
-                    className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100"
+                    className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 bg-white rounded-full p-1 hover:bg-red-50"
+                    title="刪除這筆紀錄"
                   >
                     <Trash2 size={18} />
                   </button>
                   
-                  <h3 className="text-lg font-bold text-gray-800 pr-8">{rest.name}</h3>
+                  {/* 將餐廳名稱字體放大並加黑 */}
+                  <h3 className="text-xl font-black text-gray-800 pr-8 mt-1 tracking-wide">{rest.name}</h3>
                   
-                  <div className="flex flex-wrap gap-2 mt-3 mb-3">
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-orange-700 bg-orange-100 px-2.5 py-1 rounded-full">
+                  <div className="flex flex-wrap gap-2 mt-3 mb-4">
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-orange-700 bg-orange-100 px-2.5 py-1 rounded-md shadow-sm">
                       <MapPin size={12} /> {rest.location}
                     </span>
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-100 px-2.5 py-1 rounded-full">
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 bg-blue-100 px-2.5 py-1 rounded-md shadow-sm">
                       <Tag size={12} /> {rest.type}
                     </span>
                   </div>
 
-                  {/* 顯示詳細地址 (如果有擷取到) */}
+                  {/* 顯示詳細地址 */}
                   {rest.fullAddress && (
-                    <div className="text-sm text-gray-600 mb-3 flex items-start gap-1">
-                      <MapPin size={14} className="shrink-0 mt-0.5 text-gray-400" />
+                    <div className="text-sm text-gray-600 mb-3 flex items-start gap-1.5 font-medium">
+                      <MapPin size={16} className="shrink-0 mt-0.5 text-gray-400" />
                       <span>{rest.fullAddress}</span>
                     </div>
                   )}
                   
+                  {/* 優化筆記區塊為引言樣式，增加吸睛度 */}
                   {rest.notes && (
-                    <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg mb-3">
-                      💡 {rest.notes}
-                    </p>
+                    <div className="text-sm text-gray-700 bg-orange-50/70 border-l-4 border-orange-300 p-3 rounded-r-lg mb-4 leading-relaxed font-medium">
+                      <span className="mr-1">💡</span> {rest.notes}
+                    </div>
                   )}
                   
                   {/* 底部按鈕區塊 */}
-                  <div className="mt-auto pt-4 flex flex-col sm:flex-row sm:items-center justify-between border-t border-gray-50 gap-3">
+                  <div className="mt-auto pt-4 flex flex-col sm:flex-row sm:items-center justify-between border-t border-gray-100 gap-4">
                     {rest.sourceText ? (
                       <div className="text-xs text-gray-400 flex items-start gap-1 flex-1 pr-2">
-                        <Link2 size={14} className="shrink-0 mt-0.5" />
-                        <span className="line-clamp-2 break-all">{rest.sourceText}</span>
+                        <Link2 size={14} className="shrink-0 mt-0.5 text-gray-300" />
+                        <span className="line-clamp-2 break-all italic">{rest.sourceText}</span>
                       </div>
                     ) : <div className="hidden sm:block flex-1" />}
 
-                    {/* 操作按鈕群 */}
-                    <div className="flex items-center gap-2 self-end sm:self-auto">
-                      {/* 食記/部落格按鈕 */}
+                    {/* 操作按鈕群，增加按鈕的點擊感與對比 */}
+                    <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
                       {rest.blogUrl && (
                         <a
                           href={rest.blogUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="shrink-0 inline-flex items-center gap-1.5 text-sm font-bold text-orange-600 bg-orange-50 px-3 py-1.5 rounded-lg hover:bg-orange-100 transition"
+                          className="inline-flex items-center gap-1.5 text-sm font-bold text-orange-700 bg-orange-100 px-3.5 py-2 rounded-xl hover:bg-orange-200 transition-colors shadow-sm"
                         >
                           <BookOpen size={16} /> 查看食記
                         </a>
                       )}
-                      {/* Google 地圖一鍵搜尋連結 */}
                       <a
                         href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rest.name + ' ' + (rest.fullAddress || rest.location))}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="shrink-0 inline-flex items-center gap-1.5 text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition"
+                        className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 bg-blue-100 px-3.5 py-2 rounded-xl hover:bg-blue-200 transition-colors shadow-sm"
                       >
                         <Navigation size={16} /> 在地圖開啟
                       </a>
@@ -467,7 +476,7 @@ export default function App() {
             </div>
           )}
           {filteredRestaurants.length === 0 && restaurants.length > 0 && (
-            <div className="text-center py-8 text-gray-400">
+            <div className="text-center py-12 text-gray-400 bg-white rounded-2xl border border-gray-100">
               找不到符合條件的餐廳。
             </div>
           )}
