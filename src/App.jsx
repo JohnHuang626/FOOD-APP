@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
-import { Utensils, MapPin, Tag, Plus, Loader2, Link2, Image as ImageIcon, Trash2, LogOut, FileText, Navigation } from 'lucide-react';
+import { Utensils, MapPin, Tag, Plus, Loader2, Link2, Image as ImageIcon, Trash2, LogOut, FileText, Navigation, BookOpen } from 'lucide-react';
 
 // --- 環境變數與 Firebase 初始化 ---
 // 這裡的邏輯可以自動判斷是在 Canvas 測試環境，還是您自己的 StackBlitz/Vercel 環境
@@ -163,14 +163,15 @@ export default function App() {
       let promptParts = [
         {
           text: `你是一個強大的美食資料整理助手。使用者會提供一段文字、網址或圖片。請從中分析並提取出餐廳的關鍵資訊。
-          【重要任務】：如果使用者提供的資訊（例如只有圖片或店名）沒有明確提及詳細地址，請你「主動運用知識與搜尋能力」，自動幫忙找出這家店的「縣市行政區」與「完整地址」。
+          【重要任務】：如果使用者提供的資訊（例如只有圖片或店名）沒有明確提及詳細地址，請你「主動運用知識與搜尋能力」，自動幫忙找出這家店的「縣市行政區」、「完整地址」以及「相關食記/介紹網址」。
           請務必只回傳一個乾淨的 JSON 格式字串，不要包含任何 markdown 標記（如 \`\`\`json），格式如下：
           {
             "name": "餐廳或店鋪名稱",
             "location": "縣市與行政區 (例如：嘉義縣太保市、台北市大安區。請務必自動搜尋推斷並補齊)",
             "fullAddress": "完整地址 (例如：嘉義縣太保市祥和一路東段XX號。請務必盡力搜尋找出完整地址並補齊)",
             "type": "食物種類 (如：火鍋、咖啡廳、早午餐、日式料理)",
-            "notes": "這家店的特色或推薦餐點 (限30字內)"
+            "notes": "這家店的特色或推薦餐點 (限30字內)",
+            "blogUrl": "這家店的相關食記、部落格介紹或官方網頁網址 (請主動搜尋提供，若無請留白)"
           }`
         }
       ];
@@ -234,14 +235,15 @@ export default function App() {
         throw new Error("找不到餐廳名稱，請提供更詳細的資訊。");
       }
 
-      // 將結果存入 Firestore (新增 fullAddress 欄位)
+      // 將結果存入 Firestore (新增 fullAddress 與 blogUrl 欄位)
       const roomCollectionRef = getCollectionRef();
       await addDoc(roomCollectionRef, {
         name: parsedData.name,
         location: parsedData.location || '未分類',
-        fullAddress: parsedData.fullAddress || '', // 儲存詳細地址
+        fullAddress: parsedData.fullAddress || '', 
         type: parsedData.type || '未分類',
         notes: parsedData.notes || '',
+        blogUrl: parsedData.blogUrl || '', // 儲存食記網址
         sourceText: inputText.substring(0, 150), 
         hasImage: !!selectedImage, 
         createdAt: serverTimestamp(),
@@ -422,24 +424,38 @@ export default function App() {
                     </p>
                   )}
                   
-                  {/* 底部按鈕區塊 (將資訊推到最上方，讓按鈕貼齊底部) */}
-                  <div className="mt-auto pt-4 flex items-center justify-between border-t border-gray-50">
+                  {/* 底部按鈕區塊 */}
+                  <div className="mt-auto pt-4 flex flex-col sm:flex-row sm:items-center justify-between border-t border-gray-50 gap-3">
                     {rest.sourceText ? (
                       <div className="text-xs text-gray-400 flex items-start gap-1 flex-1 pr-2">
                         <Link2 size={14} className="shrink-0 mt-0.5" />
-                        <span className="line-clamp-1 break-all">{rest.sourceText}</span>
+                        <span className="line-clamp-2 break-all">{rest.sourceText}</span>
                       </div>
-                    ) : <div />}
+                    ) : <div className="hidden sm:block flex-1" />}
 
-                    {/* Google 地圖一鍵搜尋連結 */}
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rest.name + ' ' + (rest.fullAddress || rest.location))}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="shrink-0 inline-flex items-center gap-1.5 text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition"
-                    >
-                      <Navigation size={16} /> 在地圖開啟
-                    </a>
+                    {/* 操作按鈕群 */}
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                      {/* 食記/部落格按鈕 */}
+                      {rest.blogUrl && (
+                        <a
+                          href={rest.blogUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="shrink-0 inline-flex items-center gap-1.5 text-sm font-bold text-orange-600 bg-orange-50 px-3 py-1.5 rounded-lg hover:bg-orange-100 transition"
+                        >
+                          <BookOpen size={16} /> 查看食記
+                        </a>
+                      )}
+                      {/* Google 地圖一鍵搜尋連結 */}
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rest.name + ' ' + (rest.fullAddress || rest.location))}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 inline-flex items-center gap-1.5 text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition"
+                      >
+                        <Navigation size={16} /> 在地圖開啟
+                      </a>
+                    </div>
                   </div>
                 </div>
               ))}
