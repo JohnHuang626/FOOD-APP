@@ -193,7 +193,13 @@ export default function App() {
         body: JSON.stringify(payload)
       });
 
-      if (!response.ok) throw new Error("AI 分析失敗，請檢查金鑰或網路連線。");
+      if (!response.ok) {
+        // 解析並印出實際的 API 錯誤原因
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Gemini API Error Details:", errorData);
+        const detailMsg = errorData?.error?.message ? ` (${errorData.error.message})` : "";
+        throw new Error(`AI 分析失敗，請檢查金鑰是否正確且有效。${detailMsg}`);
+      }
       
       const result = await response.json();
       let aiText = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
