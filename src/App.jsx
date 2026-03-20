@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
-import { Utensils, MapPin, Tag, Plus, Loader2, Link2, Image as ImageIcon, Trash2, LogOut, FileText } from 'lucide-react';
+import { Utensils, MapPin, Tag, Plus, Loader2, Link2, Image as ImageIcon, Trash2, LogOut, FileText, Navigation } from 'lucide-react';
 
 // --- 環境變數與 Firebase 初始化 ---
 // 這裡的邏輯可以自動判斷是在 Canvas 測試環境，還是您自己的 StackBlitz/Vercel 環境
@@ -155,6 +155,7 @@ export default function App() {
           {
             "name": "餐廳或店鋪名稱",
             "location": "縣市與行政區 (如：台北市信義區、嘉義縣太保市，盡量精簡)",
+            "fullAddress": "完整地址 (若使用者提供的資訊中有明確包含地址，請完整擷取；若無，請直接留白)",
             "type": "食物種類 (如：火鍋、咖啡廳、早午餐、日式料理)",
             "notes": "這家店的特色或推薦餐點 (限30字內)"
           }`
@@ -183,7 +184,7 @@ export default function App() {
         }
       };
 
-      // 將外部環境的模型也更新為 gemini-2.5-flash，解決原本 1.5-flash 找不到的問題
+      // 將外部環境的模型也更新為 gemini-2.5-flash
       const endpoint = isCanvasEnv 
         ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`
         : `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
@@ -195,7 +196,6 @@ export default function App() {
       });
 
       if (!response.ok) {
-        // 解析並印出實際的 API 錯誤原因
         const errorData = await response.json().catch(() => ({}));
         console.error("Gemini API Error Details:", errorData);
         const detailMsg = errorData?.error?.message ? ` (${errorData.error.message})` : "";
@@ -220,11 +220,12 @@ export default function App() {
         throw new Error("找不到餐廳名稱，請提供更詳細的資訊。");
       }
 
-      // 將結果存入 Firestore
+      // 將結果存入 Firestore (新增 fullAddress 欄位)
       const roomCollectionRef = getCollectionRef();
       await addDoc(roomCollectionRef, {
         name: parsedData.name,
         location: parsedData.location || '未分類',
+        fullAddress: parsedData.fullAddress || '', // 儲存詳細地址
         type: parsedData.type || '未分類',
         notes: parsedData.notes || '',
         sourceText: inputText.substring(0, 150), 
@@ -374,7 +375,7 @@ export default function App() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredRestaurants.map(rest => (
-                <div key={rest.id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition relative group">
+                <div key={rest.id} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition relative group flex flex-col">
                   <button 
                     onClick={() => { if(window.confirm('確定要刪除這筆紀錄嗎？')) deleteRestaurant(rest.id); }}
                     className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100"
@@ -392,6 +393,14 @@ export default function App() {
                       <Tag size={12} /> {rest.type}
                     </span>
                   </div>
+
+                  {/* 顯示詳細地址 (如果有擷取到) */}
+                  {rest.fullAddress && (
+                    <div className="text-sm text-gray-600 mb-3 flex items-start gap-1">
+                      <MapPin size={14} className="shrink-0 mt-0.5 text-gray-400" />
+                      <span>{rest.fullAddress}</span>
+                    </div>
+                  )}
                   
                   {rest.notes && (
                     <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg mb-3">
@@ -399,12 +408,25 @@ export default function App() {
                     </p>
                   )}
                   
-                  {rest.sourceText && (
-                    <div className="text-xs text-gray-400 mt-2 flex items-start gap-1">
-                      <Link2 size={14} className="shrink-0 mt-0.5" />
-                      <span className="line-clamp-2 break-all">{rest.sourceText}</span>
-                    </div>
-                  )}
+                  {/* 底部按鈕區塊 (將資訊推到最上方，讓按鈕貼齊底部) */}
+                  <div className="mt-auto pt-4 flex items-center justify-between border-t border-gray-50">
+                    {rest.sourceText ? (
+                      <div className="text-xs text-gray-400 flex items-start gap-1 flex-1 pr-2">
+                        <Link2 size={14} className="shrink-0 mt-0.5" />
+                        <span className="line-clamp-1 break-all">{rest.sourceText}</span>
+                      </div>
+                    ) : <div />}
+
+                    {/* Google 地圖一鍵搜尋連結 */}
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rest.name + ' ' + (rest.fullAddress || rest.location))}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 inline-flex items-center gap-1.5 text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition"
+                    >
+                      <Navigation size={16} /> 在地圖開啟
+                    </a>
+                  </div>
                 </div>
               ))}
             </div>
