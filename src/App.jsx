@@ -292,6 +292,10 @@ export default function App() {
           <div className="flex items-center gap-2 text-orange-500">
             <Utensils size={24} />
             <h1 className="text-xl font-bold text-gray-900">夫妻美食筆記</h1>
+            {/* 新增環境標籤，協助確認雙方是否在同一個資料庫 */}
+            <span className="hidden sm:inline-block text-xs px-2 py-0.5 rounded-full font-medium ml-2 border border-orange-200 bg-orange-50 text-orange-700">
+              {isCanvasEnv ? '🛠 開發測試區' : '✅ 正式連線區'}
+            </span>
           </div>
         </div>
       </header>
