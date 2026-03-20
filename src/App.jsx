@@ -61,8 +61,8 @@ export default function App() {
 
   // --- 動態設定網頁標題與 Icon (Favicon) ---
   useEffect(() => {
-    // 設定分頁標題
-    document.title = "夫妻美食筆記";
+    // 設定分頁標題 (Chrome 的標籤文字)
+    document.title = "美食丸家筆記";
     
     // 動態建立並設定分頁 Icon (使用 Emoji 作為 SVG 圖片)
     const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
@@ -291,7 +291,8 @@ export default function App() {
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2 text-orange-500">
             <Utensils size={24} />
-            <h1 className="text-xl font-bold text-gray-900">夫妻美食筆記</h1>
+            {/* 更新主要標題 */}
+            <h1 className="text-xl font-bold text-gray-900">美食丸家筆記</h1>
             {/* 新增環境標籤，協助確認雙方是否在同一個資料庫 */}
             <span className="hidden sm:inline-block text-xs px-2 py-0.5 rounded-full font-medium ml-2 border border-orange-200 bg-orange-50 text-orange-700">
               {isCanvasEnv ? '🛠 開發測試區' : '✅ 正式連線區'}
