@@ -59,18 +59,7 @@ export default function App() {
 
   const fileInputRef = useRef(null);
 
-  // --- 動態設定網頁標題與 Icon (Favicon) ---
-  useEffect(() => {
-    // 設定分頁標題 (Chrome 的標籤文字)
-    document.title = "美食丸家筆記";
-    
-    // 動態建立並設定分頁 Icon (使用 Emoji 作為 SVG 圖片)
-    const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
-    link.type = 'image/svg+xml';
-    link.rel = 'icon';
-    link.href = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🍱</text></svg>';
-    document.head.appendChild(link);
-  }, []);
+
 
   // --- Auth Effect ---
   useEffect(() => {
